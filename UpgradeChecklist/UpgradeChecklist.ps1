@@ -7,6 +7,9 @@
 .OUTPUTS
     Output will be in the form of HTML located in $ENV:\Temp
 .NOTES
+    Author: Ted Sdoukos
+    Version: 1.0
+    
     DISCLAIMER:
     ===========
     This Sample Code is provided for the purpose of illustration only and is
