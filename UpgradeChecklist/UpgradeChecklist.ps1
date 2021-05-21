@@ -400,6 +400,7 @@ switch ($result) {
     Default { $Message = "Unspecified Error ($_)`n`rPlease refer to:`n`r'https://docs.microsoft.com/en-us/windows/deployment/upgrade/resolution-procedures'`n`r'https://docs.microsoft.com/en-us/windows/deployment/upgrade/resolve-windows-10-upgrade-errors'"; $Color = 'Yellow' }
 }
 $Hex = [System.Convert]::ToString($result, 16) -replace '^f+', '0X'
+$null = Dismount-DiskImage -ImagePath $ISO
 Write-Host -Object "*** SYSTEM INVENTORY GATHER IS COMPLETE ***`n`rInventory file can be found at $OutputPath" -ForegroundColor Green -BackgroundColor Black
 Write-Host -Object "*** UPGRADE EVALUATION RESULT ***`n`r$Hex | $Message`n`rPlease review the logs located in 'C:\`$WINDOWS.~BT\Sources\Panther' for further information" -ForegroundColor Black -BackgroundColor $Color
 #EndRegion
