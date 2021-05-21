@@ -1,35 +1,4 @@
 #requires -Version 5.1 -RunAsAdministrator
-<#
-.SYNOPSIS
-    Gather system inventory for upgrades
-.DESCRIPTION
-    Gather system inventory for upgrades
-.OUTPUTS
-    Output will be in the form of HTML located in $ENV:\Temp
-.NOTES
-    Author: Ted Sdoukos
-    Version: 1.0
-    
-    DISCLAIMER:
-    ===========
-    This Sample Code is provided for the purpose of illustration only and is
-    not intended to be used in a production environment.
-    THIS SAMPLE CODE AND ANY RELATED INFORMATION ARE PROVIDED "AS IS" WITHOUT
-    WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT
-    LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS
-    FOR A PARTICULAR PURPOSE.
-
-    We grant You a nonexclusive, royalty-free
-    right to use and modify the Sample Code and to reproduce and distribute
-    the object code form of the Sample Code, provided that You agree:
-    (i) to not use Our name, logo, or trademarks to market Your software
-    product in which the Sample Code is embedded; (ii) to include a valid
-    copyright notice on Your software product in which the Sample Code is
-    embedded; and (iii) to indemnify, hold harmless, and defend Us and
-    Our suppliers from and against any claims or lawsuits, including
-    attorneys' fees, that arise or result from the use or distribution
-    of the Sample Code.
-#>
 Function Find-ProfileInfo {
     [cmdletbinding()]
     param (
@@ -255,6 +224,7 @@ function Get-VolumeInformation {
         Expression = { '{0:N0}' -f $_.SizeRemaining }
     } 
 }
+
 function Get-NetworkInformation {
     $IPConfig = Get-NetIPConfiguration 
     $IPInfoResult = @()
@@ -279,9 +249,8 @@ function Get-NetworkInformation {
 }
 
 # Specify the output path.  By default it will store locally on the machine.
-$OutputPath = "$env:Temp\$Env:ComputerName-SystemInventory-$(Get-Date -Format 'ddMMMyyyy).html"
-$UpgradeUserName = Read-Host -Prompt 'Please enter desired username for upgrade account.'
-$UserPass = Read-Host -Prompt "Please enter password for $UpgradeUserName" -AsSecureString
+$OutputPath = "$env:Temp\$Env:ComputerName-SystemInventory-$(Get-Date -Format 'ddMMMyyy').html"
+$FCAUserPass = Read-Host -Prompt 'Please enter password for user FCAOSUpgrade' -AsSecureString
 $Header = @'
 <style>
 TABLE {border-width: 1px; border-style: solid; border-color: black; border-collapse: collapse;}
@@ -291,15 +260,15 @@ TD {border-width: 1px; padding: 3px; border-style: solid; border-color: black;}
 '@
 #User information
 Find-ProfileInfo | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>User Profile</font></u></b><br>' -PostContent '<br>' | 
-    Out-File -FilePath $OutputPath -Append 
+Out-File -FilePath $OutputPath -Append 
 Get-LocalUser | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Local User</font></u></b><br>' -PostContent '<br>' | 
-    Out-File -FilePath $OutputPath -Append 
+Out-File -FilePath $OutputPath -Append 
 Get-LocalGroup -PipelineVariable Group -Name 'Power Users', 'Remote Desktop Users', 'Remote Management Users' | Get-LocalGroupMember -ErrorAction SilentlyContinue | 
-    Select-Object -Property @{name = 'GroupName'; expression = { $Group.Name } }, * | 
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Local Group</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+Select-Object -Property @{name = 'GroupName'; expression = { $Group.Name } }, * | 
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Local Group</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 try {
-    New-LocalUser -Name $UpgradeUserName -AccountNeverExpires -UserMayNotChangePassword -Password $UserPass -Description 'OS Upgrade Account' -ErrorAction Stop
-    Add-LocalGroupMember -Group 'Administrators' -Member $UpgradeUserName -ErrorAction Stop
+    New-LocalUser -Name 'FCAOSUPGRADE' -AccountNeverExpires -UserMayNotChangePassword -Password $FCAUserPass -Description 'OS Upgrade Account' -ErrorAction Stop
+    Add-LocalGroupMember -Group 'Administrators' -Member 'FCAOSUPGRADE' -ErrorAction Stop
 }
 Catch {
     Write-Warning -Message "Unable to create user 'FCAOSUPGRADE'`n`rERROR:$($_.Exception.Message)"
@@ -309,47 +278,47 @@ Get-UACSetting | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>
 
 #Network information
 Get-NetworkInformation | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Network IP Configuration</font></u></b><br>' -PostContent '<br>' | 
-    Out-File -FilePath $OutputPath -Append 
+Out-File -FilePath $OutputPath -Append 
 Get-WmiObject -Class Win32_NetworkAdapterConfiguration | Select-Object -Property Wins* | 
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Network WINS</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Network WINS</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 Get-NetRoute | Select-Object -Property InterfaceIndex, AddressFamily, DestinationPrefix, NextHop, RouteMetric, InterfaceMetric, Store | 
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Network Route</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Network Route</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 Get-NetFirewallRule | Select-Object -Property Name, DisplayName, Enabled, Profile, Direction, Action, EdgeTraversalPolicy, Owner, PrimaryStatus, Status |
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Network Firewall Rule</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Network Firewall Rule</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 
 #Disable Firewall
 Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled 'False'
 Get-ComputerInfo | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Computer Information</font></u></b><br>' -PostContent '<br>' | 
-    Out-File -FilePath $OutputPath -Append 
+Out-File -FilePath $OutputPath -Append 
 
 #Disk information
 Get-DiskInformation | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Disk Information</font></u></b><br>' -PostContent '<br>' | 
-    Out-File -FilePath $OutputPath -Append 
+Out-File -FilePath $OutputPath -Append 
 Get-VolumeInformation | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Volume Information</font></u></b><br>' -PostContent '<br>' | 
-    Out-File -FilePath $OutputPath -Append 
+Out-File -FilePath $OutputPath -Append 
 Get-SmbShare | Select-Object -Property Name, Path, Scoped, ScopeName, ShareState, AvailabilityType, ShareType, FolderEnumerationMode, CachingMode, LeasingMode, SmbInstance, ConcurrentUserLimit, ContinuouslyAvailable, EncryptData, Special, SecurityDescriptor | 
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>SMB Shares</font></u></b><br>' -PostContent '<br>' | 
-    Out-File -FilePath $OutputPath -Append 
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>SMB Shares</font></u></b><br>' -PostContent '<br>' | 
+Out-File -FilePath $OutputPath -Append 
 $InstalledFeatures = Get-WindowsFeature | Where-Object { $_.Installed }
 $InstalledFeatures | Select-Object -Property Name, DisplayName, InstallState, FeatureType, Path |
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Installed Features</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Installed Features</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 if ($InstalledFeatures.Name -match 'DFS') {
-    Get-DfsnRoot -ComputerName $env:COMPUTERNAME | Select-Object -Property Path, Type, Properties, TimeToLIve, State, Description, Flags, @{'Name'='GrantAdminAccess';'Expression'={$_.GrantAdminAccess -join ', '}} | 
-        ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>DFS-N</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+    Get-DfsnRoot -ComputerName $env:COMPUTERNAME | Select-Object -Property Path, Type, Properties, TimeToLIve, State, Description, Flags, @{'Name' = 'GrantAdminAccess'; 'Expression' = { $_.GrantAdminAccess -join ', ' } } | 
+    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>DFS-N</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
     Get-DfsReplicatedFolder | Select-Object -Property FolderName, DomainName, GroupName, DfsnPath, IsDfsnPathPublished, State | 
-        ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>DFS-N Replication</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>DFS-N Replication</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 }
 if (($InstalledFeatures.Name -Match 'file') -and (Get-Command -Name 'Get-FileShare' -ErrorAction Ignore)) {
     Get-FileShare | Select-Object -Property Name, HealthStatus, OperationalStatus, FileSharingProtocol, VolumeRelativePath | 
-        ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>File Shares</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>File Shares</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 }
 if ($InstalledFeatures.Name -Match 'print') {
     Get-Printer | Select-Object -Property Name, Description, PortName, DriverName, JobCount, PrinterStatus, Type, DeviceType, Location, Published, Shared, ShareName |
-        ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Printer Shares</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Printer Shares</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 }
 if (($InstalledFeatures.Name -Match 'Web') -and (Get-Module -Name 'IISAdministration' -ListAvailable)) {
     Get-IISAppPool | Select-Object -Property Name, Status, ManagedRuntimeVersion, ManagedPipelineMode, StartMode |
-        ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>IIS App Pool</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>IIS App Pool</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
     Get-IISSite | Select-Object -Property Name, ID, State, @{
         Name       = 'Bindings'
         Expression = { $_.Bindings | ForEach-Object { "$($_.protocol) $($_.bindingINformation) sslFlags=$($_.sslFlags)" } }
@@ -360,16 +329,16 @@ if (($InstalledFeatures.Name -Match 'Web') -and (Get-Module -Name 'IISAdministra
     ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>IIS Site</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 }
 
-$SQL = Get-Service | Where-Object -FilterScript { $_.Name -match 'SQL' -or $_.DisplayName -match 'SQL'}
+$SQL = Get-Service | Where-Object -FilterScript { $_.Name -match 'SQL' -or $_.DisplayName -match 'SQL' }
 if ($SQL) {
-    Get-CimInstance -ClassName CIM_Service | Where-Object -FilterScript {$_.Name -in $SQL.Name} | 
-        Select-Object -Property Name, DisplayName, State, StartMode, StartName, ProcessID, Description |
-        ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>SQL Information</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+    Get-CimInstance -ClassName CIM_Service | Where-Object -FilterScript { $_.Name -in $SQL.Name } | 
+    Select-Object -Property Name, DisplayName, State, StartMode, StartName, ProcessID, Description |
+    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>SQL Information</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 }
 
 #Service information
 Get-Service | Sort-Object -Property StartType | Select-Object -Property Name, Status, StartType | 
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Services</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Services</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 
 #WSUS Information
 If ($WSUS = Get-WUSettings) {
@@ -377,7 +346,7 @@ If ($WSUS = Get-WUSettings) {
 }
 Else {
     Get-WUSettings -WUAAPI | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>WSUS Information</font></u></b><br>' -PostContent '<br>' | 
-        Out-File -FilePath $OutputPath -Append 
+    Out-File -FilePath $OutputPath -Append 
 }
 #Find last update
 $LastUpdate = (Get-HotFix | Sort-Object -Property InstalledOn -Descending | Select-Object -First 1).InstalledOn
@@ -386,25 +355,36 @@ $LastUpdate = (Get-HotFix | Sort-Object -Property InstalledOn -Descending | Sele
 } | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Last Update Date</font></u></b><br>' -PostContent '<br>' -Property 'PatchDate' | Out-File -FilePath $OutputPath -Append 
 #Program information
 Get-Package | Where-Object { $_.ProviderName -match 'msi|program' } | Select-Object -Property Name, Version | 
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Installed Programs</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Installed Programs</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 
 #Get Event information
 Get-WinEvent -FilterHashtable @{'LogName' = 'System', 'Application'; 'Level' = @(1, 2) } | Sort-Object -Property LogName, TimeCreated -Descending | 
-    Select-Object -Property LogName, ProviderName, TimeCreated, ID, LevelDisplayName, Message, UserID, RecordID, Keywords |
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>System and Application Event Logs</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+Select-Object -Property LogName, ProviderName, TimeCreated, ID, LevelDisplayName, Message, UserID, RecordID, Keywords |
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>System and Application Event Logs</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 
 #Find Scheduled Tasks
 Get-ScheduledTask | Select-Object -Property State, Author, Description, Principal, Settings, TaskName, TaskPath, URI | 
-    ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Scheduled Task</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
+ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Scheduled Task</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 
-### Uncomment rest of script to enable compatibility test.###
-<# #Region Upgrade Compatibility Test
-$SetupPath = 'E:' #Path to where setup.exe is for the OS
+#Region Upgrade Compatibility Test
+Do { $OS = Read-Host -Prompt 'What Operating System are you upgrading to? (2016 or 2019)' }
+While ($OS -notmatch '^2016$|^2019$')
+If ($OS -eq 2016) {
+    $ISO = 'C:\en_windows_server_2019_updated_march_2021_x64_dvd_ec2626a1.iso' #Edit your ISO path to where your 2016 install is
+}
+Else { $ISO = 'C:\en_windows_server_2019_updated_march_2021_x64_dvd_ec2626a1.iso' } #Edit your ISO path to where your 2019 install is
+Try {
+    $SetupPath = (Mount-DiskImage -ImagePath $ISO -ErrorAction Stop | Get-Volume).DriveLetter #Path to where setup.exe is for the OS
+}
+Catch {
+    Write-Warning -Message "Unable to mount ISO`n`rERROR: $($_.Exception.Message)"
+    Exit
+}
 $ResultPath = "$env:Temp" #Path to output results
 
 $CommandFile = "$ResultPath\Check.cmd"
 Set-Content -Path $CommandFile -Value '@echo off' -Force
-Add-Content -Path $CommandFile -Value "$SetupPath\setup.exe /Auto Upgrade /Quiet /NoReboot /DynamicUpdate Disable /Compat Scanonly" -Force
+Add-Content -Path $CommandFile -Value "$SetupPath`:\setup.exe /Auto Upgrade /Quiet /NoReboot /DynamicUpdate Disable /Compat Scanonly" -Force
 Add-Content -Path $CommandFile -Value "echo %ERRORLEVEL% > $ResultPath\check.txt" -Force
 
 #Call Setup.exe to see if compatible
@@ -412,13 +392,14 @@ cmd.exe /c "$ResultPath\Check.cmd"
 
 $result = Get-Content "$ResultPath\check.txt"
 switch ($result) {
-    '-1047526896 ' { $Message = "No issues found."; $Color = 'Green' ; Break}
-    '-1047526904 ' { $Message = "Compatibility issues found (hard block)."; $Color = 'Red' ; Break}
-    '-1047526908 ' { $Message = "Migration choice (auto upgrade) not available (probably the wrong SKU or architecture)·"; $Color = 'Yellow' ; Break}
-    '-1047526912 ' { $Message = "Does not meet system requirements."; $Color = 'Yellow' ; Break}
-    '-1047526898 ' { $Message = "Insufficient free disk space."; $Color = 'Yellow' ; Break }
-    Default { $Message = "Unspecified Error ($_)`n`rPlease refer to:`n`r'https://docs.microsoft.com/en-us/windows/deployment/upgrade/resolution-procedures'`n`r'https://docs.microsoft.com/en-us/windows/deployment/upgrade/resolve-windows-10-upgrade-errors'"; $Color = 'Yellow'}
+    '-1047526896 ' { $Message = 'No issues found.'; $Color = 'Green' ; Break }
+    '-1047526904 ' { $Message = 'Compatibility issues found (hard block).'; $Color = 'Red' ; Break }
+    '-1047526908 ' { $Message = 'Migration choice (auto upgrade) not available (probably the wrong SKU or architecture)·'; $Color = 'Yellow' ; Break }
+    '-1047526912 ' { $Message = 'Does not meet system requirements.'; $Color = 'Yellow' ; Break }
+    '-1047526898 ' { $Message = 'Insufficient free disk space.'; $Color = 'Yellow' ; Break }
+    Default { $Message = "Unspecified Error ($_)`n`rPlease refer to:`n`r'https://docs.microsoft.com/en-us/windows/deployment/upgrade/resolution-procedures'`n`r'https://docs.microsoft.com/en-us/windows/deployment/upgrade/resolve-windows-10-upgrade-errors'"; $Color = 'Yellow' }
 }
-$Hex = [System.Convert]::ToString($result,16) -replace '^f+','0X'
+$Hex = [System.Convert]::ToString($result, 16) -replace '^f+', '0X'
+Write-Host -Object "*** SYSTEM INVENTORY GATHER IS COMPLETE ***`n`rInventory file can be found at $OutputPath" -ForegroundColor Green -BackgroundColor Black
 Write-Host -Object "*** UPGRADE EVALUATION RESULT ***`n`r$Hex | $Message`n`rPlease review the logs located in 'C:\`$WINDOWS.~BT\Sources\Panther' for further information" -ForegroundColor Black -BackgroundColor $Color
-#EndRegion #>
+#EndRegion
