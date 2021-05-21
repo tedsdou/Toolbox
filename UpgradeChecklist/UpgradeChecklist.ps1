@@ -279,7 +279,7 @@ function Get-NetworkInformation {
 }
 
 # Specify the output path.  By default it will store locally on the machine.
-$OutputPath = "$env:Temp\SystemInventory.html"
+$OutputPath = "$env:Temp\$Env:ComputerName-SystemInventory-$(Get-Date).html"
 $UpgradeUserName = Read-Host -Prompt 'Please enter desired username for upgrade account.'
 $UserPass = Read-Host -Prompt "Please enter password for $UpgradeUserName" -AsSecureString
 $Header = @'
