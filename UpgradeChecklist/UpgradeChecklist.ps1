@@ -1,4 +1,44 @@
+<#
+.SYNOPSIS
+    Performs upgrade checklist
+.DESCRIPTION
+    Performs upgrade checklist
+.EXAMPLE
+    PS C:\Scripts> $pass = Read-Host -AsSecureString
+    ********
+    PS C:\Scripts> .\UpgradeCheckList.ps1 -UpgradeUserName 'UpgradeUser' -UpgradeUserPass $pass -OS 2019
+.NOTES
+    Author: Ted Sdoukos (Ted.Sdoukos@Microsoft.com)
+    Version: 1.1
+    Disclaimer:
+    This Sample Code is provided for the purpose of illustration only and is 
+    not intended to be used in a production environment.  
+    THIS SAMPLE CODE AND ANY RELATED INFORMATION ARE PROVIDED "AS IS" WITHOUT
+    WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT 
+    LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS
+    FOR A PARTICULAR PURPOSE.  
+    We grant You a nonexclusive, royalty-free
+    right to use and modify the Sample Code and to reproduce and distribute
+    the object code form of the Sample Code, provided that You agree:
+    (i) to not use Our name, logo, or trademarks to market Your software
+    product in which the Sample Code is embedded; (ii) to include a valid
+    copyright notice on Your software product in which the Sample Code is
+    embedded; and (iii) to indemnify, hold harmless, and defend Us and
+    Our suppliers from and against any claims or lawsuits, including
+    attorneys' fees, that arise or result from the use or distribution
+    of the Sample Code.
+#>
+
+
 #requires -Version 5.1 -RunAsAdministrator
+[CmdletBinding()]
+Param(
+    [string]$UpgradeUserName, 
+    [securestring]$UpgradeUserPass,
+    [ValidateSet(2016,2019)]
+    [string]$OS
+    )
+
 Function Find-ProfileInfo {
     [cmdletbinding()]
     param (
@@ -250,7 +290,6 @@ function Get-NetworkInformation {
 
 # Specify the output path.  By default it will store locally on the machine.
 $OutputPath = "$env:Temp\$Env:ComputerName-SystemInventory-$(Get-Date -Format 'ddMMMyyy').html"
-$FCAUserPass = Read-Host -Prompt 'Please enter password for user FCAOSUpgrade' -AsSecureString
 $Header = @'
 <style>
 TABLE {border-width: 1px; border-style: solid; border-color: black; border-collapse: collapse;}
@@ -267,11 +306,11 @@ Get-LocalGroup -PipelineVariable Group -Name 'Power Users', 'Remote Desktop User
 Select-Object -Property @{name = 'GroupName'; expression = { $Group.Name } }, * | 
 ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Local Group</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 try {
-    New-LocalUser -Name 'FCAOSUPGRADE' -AccountNeverExpires -UserMayNotChangePassword -Password $FCAUserPass -Description 'OS Upgrade Account' -ErrorAction Stop
-    Add-LocalGroupMember -Group 'Administrators' -Member 'FCAOSUPGRADE' -ErrorAction Stop
+    New-LocalUser -Name $UpgradeUserName -AccountNeverExpires -UserMayNotChangePassword -Password $UpgradeUserPass -Description 'OS Upgrade Account' -ErrorAction Stop
+    Add-LocalGroupMember -Group 'Administrators' -Member $UpgradeUserName -ErrorAction Stop
 }
 Catch {
-    Write-Warning -Message "Unable to create user 'FCAOSUPGRADE'`n`rERROR:$($_.Exception.Message)"
+    Write-Warning -Message "Unable to create user $UpgradeUserName`n`rERROR:$($_.Exception.Message)"
 }
 #Get UAC information
 Get-UACSetting | ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>User Account Control</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append
@@ -367,8 +406,6 @@ Get-ScheduledTask | Select-Object -Property State, Author, Description, Principa
 ConvertTo-Html -Head $Header -PreContent '<b><u><font size = 4>Scheduled Task</font></u></b><br>' -PostContent '<br>' | Out-File -FilePath $OutputPath -Append 
 
 #Region Upgrade Compatibility Test
-Do { $OS = Read-Host -Prompt 'What Operating System are you upgrading to? (2016 or 2019)' }
-While ($OS -notmatch '^2016$|^2019$')
 If ($OS -eq 2016) {
     $ISO = 'C:\en_windows_server_2019_updated_march_2021_x64_dvd_ec2626a1.iso' #Edit your ISO path to where your 2016 install is
 }
