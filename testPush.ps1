@@ -1,1 +1,0 @@
-get-process -Name lsass
