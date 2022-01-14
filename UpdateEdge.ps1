@@ -3,7 +3,7 @@ $InstallPath = 'C:\Temp\MicrosoftEdgeSetup.exe'
 Invoke-WebRequest -Uri $Download -OutFile $InstallPath
 $StartInstall = Start-Process -FilePath $InstallPath -ArgumentList '/silent /install'
 while ($StartInstall) {
-    Write-Warning -Message 'Waiting for Edget to update'
+    Write-Warning -Message 'Waiting for Edge to update'
     Start-Sleep -Seconds 5
 }
 
