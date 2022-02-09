@@ -5,12 +5,11 @@ function Expand-Drive {
     .DESCRIPTION
     After increasing the volume size in the VM shell, use this command to expand the drive in Windows.
     .EXAMPLE
-    'ms','foo','win10' | Expand-Drive -DriveLetter 'C' -Verbose
-    
+    'ms','foo','win10' | Expand-Drive -DriveLetter 'C'
     This sends three machines through the pipeline to run on the C drive
-    
     .EXAMPLE
-    Expand-Drive -Computer "BRTFS20", "AWSAPP86" -DriveLetter "E" -Verbose
+    Expand-Drive -Computer 'WIN10', 'MS' -DriveLetter 'X'
+    This example will expand the X drive on WIN10 and MS.
     #>
     [CmdletBinding()]
     Param
