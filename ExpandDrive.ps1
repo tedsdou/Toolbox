@@ -1,5 +1,4 @@
 function Expand-Drive {
-    #For better readability, place the help *inside* the function.
     <#
     .Synopsis
     Expand hard drive to utilize all available space.
