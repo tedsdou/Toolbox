@@ -14,25 +14,31 @@ function Expand-Drive {
     [CmdletBinding()]
     Param
     (
-        # Param1 help description
         [Parameter(Mandatory,
             Position = 0,
             ValueFromPipeline
         )]
         [string[]]$ComputerName,
 
-        # Param2 help description
         [Parameter(Mandatory,
             Position = 1)]
-        [String]$DriveLetter
+        [String]$DriveLetter,
+
+        [PSCredential]
+        $Credential
     )
 
     Process {
         foreach ($Computer in $ComputerName) {
             Write-Verbose -Message "SCANNING Drive: $($DriveLetter.ToUpper()) - Server: $($Computer.ToUpper())"
             #Creating a CIM session is a low-level form of PowerShell Remoting
+            $CimParam = @{
+                'ComputerName' = $ComputerName
+                'ErrorAction' = 'Stop'
+                'Credential' = if ($Credential) {$Credential} Else {$null}
+            }
             try {
-                $Cim = New-CimSession -ComputerName $Computer -ErrorAction Stop
+                $Cim = New-CimSession @CimParam
             }
             catch {
                 Write-Warning -Message "Unable to connect to $Computer`n`rERROR: $($_.Exception.Message)"
