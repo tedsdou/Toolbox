@@ -15,14 +15,14 @@ function Expand-Drive {
     Param
     (
         # Param1 help description
-        [Parameter(Mandatory = $true,
+        [Parameter(Mandatory,
             Position = 0,
             ValueFromPipeline
         )]
         [string[]]$ComputerName,
 
         # Param2 help description
-        [Parameter(Mandatory = $true,
+        [Parameter(Mandatory,
             Position = 1)]
         [String]$DriveLetter
     )
