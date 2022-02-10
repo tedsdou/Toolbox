@@ -52,6 +52,7 @@ function Expand-Drive {
                 if ($MaxSize.SizeMax -gt ($OrigSize.Size + 1mb)) {
                     Write-Verbose -Message "RESIZING Drive: $($DriveLetter.ToUpper()) - Server: $($Computer.ToUpper())"
                     Resize-Partition -DriveLetter $DriveLetter -Size $MaxSize.SizeMax -CimSession $Cim -ErrorAction Stop
+                    $null = Update-Disk -Number ((Get-Partition -DriveLetter $DriveLetter).DiskNumber)
                 }
     
                 $NewSize = Get-Volume -DriveLetter $DriveLetter -CimSession $Cim -ErrorAction Stop
