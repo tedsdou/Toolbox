@@ -3,7 +3,7 @@ Function Get-PublicIP {
     Param()
     $pattern = '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
     $null = (Invoke-WebRequest -Uri 'https://www.bing.com/search?q=IP+Address' | Select-Object -Property content) -match $pattern 
-    If ($Matches) { Write-Output $Matches.values  }
+    If ($Matches) { Write-Output $Matches.values }
 }
 function Request-JITAccess {
     [CmdletBinding()]
@@ -33,8 +33,8 @@ function Request-JITAccess {
         $JitPolicyVm1 = (@{
                 id    = $VM.Id
                 ports = (@{
-                        number                     = $Port;
-                        endTimeUtc                 = ('{0:u}' -f (Get-Date).AddHours($AccessTime).ToUniversalTime() -replace ' ', 'T');
+                        number                     = $Port
+                        endTimeUtc                 = (Get-Date).AddHours($AccessTime).ToUniversalTime()
                         allowedSourceAddressPrefix = @($IPv4Address)
                     })
             })
@@ -49,4 +49,4 @@ function Request-JITAccess {
     }
 }
 
-Request-JITAccess -SubscriptionId (Get-AzContext).Subscription.Id -ResourceGroupName fedex -VMName ms2022 -IPv4Address (Get-PublicIP) -Port 3389
+Request-JITAccess -SubscriptionId (Get-AzContext).Subscription.Id -ResourceGroupName FedEx -VMName MS2022 -IPv4Address (Get-PublicIP) -Port 3389

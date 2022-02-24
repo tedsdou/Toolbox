@@ -33,7 +33,7 @@ function Expand-Drive {
             Write-Verbose -Message "SCANNING Drive: $($DriveLetter.ToUpper()) - Server: $($Computer.ToUpper())"
             #Creating a CIM session is a low-level form of PowerShell Remoting
             $CimParam = @{
-                'ComputerName' = $ComputerName
+                'ComputerName' = $Computer
                 'ErrorAction' = 'Stop'
                 'Credential' = if ($Credential) {$Credential} Else {$null}
             }
@@ -66,7 +66,7 @@ function Expand-Drive {
                 $null = Remove-CimSession -CimSession $Cim  
             }
             catch {
-                $($_.Exception.Message)
+                $_.Exception.Message
             }           
         }
     } 
