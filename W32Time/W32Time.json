@@ -1,0 +1,61 @@
+{
+  "$schema": "https://aka.ms/PowerShell/Crescendo/Schemas/2021-11",
+  "Commands": [
+    {
+      "Verb": "Invoke",
+      "Noun": "W32Time",
+      "OriginalName": "C:\\Windows\\System32\\w32tm.exe",
+      "Platform": [
+        "Windows"
+      ],
+      "Parameters": [
+        {
+          "Name": "Register",
+          "OriginalName": "/register",
+          "ParameterType": "switch",
+          "Description": "register to run as a service and add default configuration to the registry.",
+          "ParameterSetName": [
+            "Default"
+          ]
+        },
+        {
+          "Name": "UnRegister",
+          "OriginalName": "/unregister",
+          "ParameterType": "switch",
+          "Description": "unregister service and remove all configuration information from the registry.",
+          "ParameterSetName": [
+            "Default"
+          ]
+        },
+        {
+          "Name": "Resync",
+          "OriginalName": "/resync",
+          "ParameterType": "switch",
+          "Description": "Tell a computer that it should resynchronize its clock as soon as possible, throwing out all accumulated error statistics.",
+          "ParameterSetName": [
+            "Resync"
+          ]
+        },
+        {
+          "Name": "Query",
+          "OriginalName": "/query",
+          "ParameterType": "switch",
+          "Description": "Construct a query",
+          "ParameterSetName": [
+            "Query"
+          ]
+        },
+        {
+          "Name": "Source",
+          "OriginalName": "/source",
+          "ParameterType": "switch",
+          "Description": "Display the time source.",
+          "ParameterSetName": [
+            "Query"
+          ]
+        }
+      ],
+      "Examples": []
+    }
+  ]
+}
