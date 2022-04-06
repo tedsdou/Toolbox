@@ -53,9 +53,25 @@
           "ParameterSetName": [
             "Query"
           ]
+        },
+        {
+          "Name": "ReRegister",
+          "OriginalName": "",
+          "ParameterType": "switch",
+          "Description": "Re-register the service.",
+          "ParameterSetName": [
+            "ReRegister"
+          ]
         }
       ],
-      "Examples": []
+      "Examples": [],
+      "OutputHandlers": [
+        {
+          "ParameterSetName": "Default",
+          "HandlerType": "Function",
+          "Handler": "ParseProvider"
+        }
+      ]
     }
   ]
 }
