@@ -9,3 +9,4 @@ while (Get-Process -Name 'MicrosoftEdgeSetup' -ErrorAction Ignore) {
 }
 
 Write-Host -ForegroundColor Cyan -Object 'Edge Update Complete' -BackgroundColor Black
+
